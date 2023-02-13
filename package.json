@@ -12,6 +12,8 @@
   "dependencies": {
     "chatgpt": "^4.2.0",
     "dotenv": "^16.0.3",
-    "sqlite3": "^5.1.4"
+    "sqlite3": "^5.1.4",
+    "wikipedia": "^2.0.0",
+    "wolfram-alpha-node": "^0.0.3"
   }
 }
