@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "es2022",
+    "moduleResolution": "node",
+  },
+  "include": ["src/*.ts", "src/**/*.ts", "src/*.js", "src/**/*.js"],
+  "exclude": ["node_modules"]
+}

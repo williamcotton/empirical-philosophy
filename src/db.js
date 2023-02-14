@@ -1,36 +1,42 @@
-import sqlite3 from 'sqlite3';
+import sqlite3 from "sqlite3";
 
 // Connect to the database or create it if it doesn't exist
-export const db = new sqlite3.Database('./solved-problems.db', (err) => {
+export const db = new sqlite3.Database("./solved-problems.db", (err) => {
   if (err) {
     return console.error(err.message);
   }
-  console.log({ type: 'db_connect' });
+  console.log({ type: "db_connect" });
 });
 
 export async function insertData(data) {
   // Insert data into the table
-  db.run(`INSERT INTO solved_problems (question, answer, grade_level, category, operation, solved_prompt, solved_augmented_prompt, solved_res, solved_question, solved_description, solved_thunk, solved_answer, correct)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+  db.run(
+    `INSERT INTO solved_problems (question, answer, grade_level, category, operation, solved_prompt, solved_augmented_prompt, solved_res, solved_question, solved_description, solved_thunk, solved_answer, correct)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
       data.problem.question,
       data.problem.answer,
       data.problem.grade_level,
       data.problem.category,
-      data.problem.operation || '',
+      data.problem.operation || "",
       data.solvedProblem.prompt,
       data.solvedProblem.augmentedPrompt,
       JSON.stringify(data.solvedProblem.res),
       data.solvedProblem.question || data.problem.question,
-      JSON.stringify(data.solvedProblem.description ? data.solvedProblem.description : []),
-      data.solvedProblem.thunk || '',
-      data.solvedProblem.answer || '',
-      data.correct ? 1 : 0
-    ], function(err) {
+      JSON.stringify(
+        data.solvedProblem.description ? data.solvedProblem.description : []
+      ),
+      data.solvedProblem.thunk || "",
+      data.solvedProblem.answer || "",
+      data.correct ? 1 : 0,
+    ],
+    function (err) {
       if (err) {
         return console.log(err.message);
       }
-      console.log({ type: 'db_insert' });
-    });
+      console.log({ type: "db_insert" });
+    }
+  );
 }
 
 export // Create a table to store the data
@@ -56,7 +62,7 @@ db.run(createTableSql, (err) => {
   if (err) {
     return console.error(err.message);
   }
-  console.log({ type: 'db_created_table' });
+  console.log({ type: "db_created_table" });
 });
 
 export function closeDb() {
@@ -64,7 +70,6 @@ export function closeDb() {
     if (err) {
       return console.error(err.message);
     }
-    console.log({ type: 'db_close' });
+    console.log({ type: "db_close" });
   });
 }
-

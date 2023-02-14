@@ -15,6 +15,7 @@
     "sqlite3": "^5.1.4",
     "ts-node": "^10.9.1",
     "wikipedia": "^2.0.0",
-    "wolfram-alpha-node": "^0.0.3"
+    "wolfram-alpha-node": "^0.0.3",
+    "wordnet": "^2.0.0"
   }
 }

@@ -17,7 +17,7 @@ Are all bachelors unmarried?
   "en": "{answer}, all bachelors are unmarried."
 } 
 Question: 
-`.replace(/(\r\n|\n|\r)/gm, '');
+`.replace(/(\r\n|\n|\r)/gm, "");
 
 export const analyticAugmentationFirstOrderQueryContext = `
 Do not perform calculations.
@@ -55,7 +55,7 @@ What is percentage of people who make more than $10,000 a year in Dansville, NY?
   "en": "The population of Dansville, NY is {answer}."
 }
 Question:
-`.replace(/(\r\n|\n|\r)/gm, '');
+`.replace(/(\r\n|\n|\r)/gm, "");
 
 export const analyticAugmentationSecondOrder = `
 Do not perform calculations.
@@ -74,13 +74,13 @@ Context()
     const daysInAWeek = 7;
     const totalHoursPracticedInAWeek = daysPracticedInAWeek * hoursPracticedInADay;
     const averagePracticeTimePerDay = totalHoursPracticedInAWeek / daysInAWeek;
-    return {answer: averagePracticeTimePerDay, solvedProblems: [], computed: true, query: false};
     dispatch({type: 'compute_response'});
+    return {answer: averagePracticeTimePerDay, solvedProblems: [], computed: true, query: false};
   })(query, dispatch)",
   "en": "Laura practices an average of {answer} hours per day."
 } 
 Question: 
-`.replace(/(\r\n|\n|\r)/gm, '');
+`.replace(/(\r\n|\n|\r)/gm, "");
 
 export const analyticAugmentationThirdOrder = `
 Do not perform calculations.
@@ -89,6 +89,17 @@ Use standard Javascript Math, Date, String, Array, etc to perform calculations.
 Define new functions in the %%%THUNK%%% to perform calculations.
 Always answer with Javascript compatible code in the %%%THUNK%%%, including numerical form without commas (eg, 238572348723).
 Always answer with this JSON compatible object form, eg, {"thunk":%%%THUNK%%%} 
+Question: 
+Context()
+Are all bachelors unmarried?
+{
+  "thunk": "(async function(query, dispatch) {
+    dispatch({type: 'compute'});
+    const termsAreSynonyms = areSynonyms('bachelor', 'unmarried') ? 'yes' : 'no';
+    return {answer: termsAreSynonyms, solvedProblems: [], computed: true, query: false};
+  })(query, dispatch)",
+  "en": "{answer}, all bachelors are unmarried."
+}
 Question: 
 Context() 
 What is twice the population of Albequerque, New Mexico?
@@ -147,4 +158,4 @@ A decade ago, Oakville's population was 67,624 people. Now, it is 190% larger. W
   "en": "The current population of Oakville is {answer} people.',
 }
 Question: 
-`.replace(/(\r\n|\n|\r)/gm, '');
+`.replace(/(\r\n|\n|\r)/gm, "");
