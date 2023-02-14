@@ -5,7 +5,7 @@ export const db = new sqlite3.Database('./solved-problems.db', (err) => {
   if (err) {
     return console.error(err.message);
   }
-  console.log('Connected to the problems database.');
+  console.log({ type: 'db_connect' });
 });
 
 export async function insertData(data) {
@@ -29,7 +29,7 @@ export async function insertData(data) {
       if (err) {
         return console.log(err.message);
       }
-      console.log(`Data has been successfully inserted into the database`);
+      console.log({ type: 'db_insert' });
     });
 }
 
@@ -56,7 +56,7 @@ db.run(createTableSql, (err) => {
   if (err) {
     return console.error(err.message);
   }
-  console.log('Table created successfully.');
+  console.log({ type: 'db_created_table' });
 });
 
 export function closeDb() {
@@ -64,7 +64,7 @@ export function closeDb() {
     if (err) {
       return console.error(err.message);
     }
-    console.log('Close the database connection.');
+    console.log({ type: 'db_close' });
   });
 }
 

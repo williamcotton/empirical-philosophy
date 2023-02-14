@@ -41,7 +41,49 @@ export const trivia = {
       "grade_level": "1st grade, 2nd grade",
       "category": "Geography",
       "operation": 60
-    }
+    },
+    {
+      "question": "What is the reverse of the name of the mayor of Chicago?",
+      "answer": "toofthgiL iroL",
+      "grade_level": "1st grade, 2nd grade",
+      "category": "Geography",
+      "operation": 60
+    },
+    {
+      "question": "What is the population of Geneseo, NY?",
+      "answer": 7574,
+      "grade_level": "1st grade, 2nd grade",
+      "category": "Geography",
+      "operation": 70
+    },
+    {
+      "question": "What is the population of Rochester, NY?",
+      "answer": 211328,
+      "grade_level": "1st grade, 2nd grade",
+      "category": "Geography",
+      "operation": 80
+    },
+    {
+      "question": "What is the population of Geneseo, NY combined with the population of Rochester, NY?",
+      "answer": 218902,
+      "grade_level": "1st grade, 2nd grade",
+      "category": "Geography",
+      "operation": 90
+    },
+    {
+      "question": "What is the population of Geneseo, NY combined with the population of Rochester, NY, divided by string length of the answer to the question 'What is the capital of France?'?",
+      "answer": 43780.4,
+      "grade_level": "1st grade, 2nd grade",
+      "category": "Geography",
+      "operation": 90
+    },
+    {
+      "question": "What is the rot13 of the answer to the question 'What is the capital of France?'?",
+      "answer": "Cnevf",
+      "grade_level": "1st grade, 2nd grade",
+      "category": "Geography",
+      "operation": 100
+    },
   ],
 };
 
@@ -60,6 +102,32 @@ export const rot13 = {
       "grade_level": "1st grade, 2nd grade",
       "category": "Rot13",
       "operation": 20
+    },
+  ],
+};
+
+export const fibonacci = {
+  "problems": [
+    {
+      "question": "If 1 is the 1st number, what's the 10th number in the Fibonacci sequence?",
+      "answer": 55,
+      "grade_level": "1st grade, 2nd grade",
+      "category": "Fibonacci",
+      "operation": 10
+    },
+    {
+      "question": "If 1 is the 1st number, what's the 20th number in the Fibonacci sequence?",
+      "answer": 6765,
+      "grade_level": "1st grade, 2nd grade",
+      "category": "Fibonacci",
+      "operation": 20
+    },
+    {
+      "question": "If 1 is the 1st number, what's the 30th number in the Fibonacci sequence?",
+      "answer": 832040,
+      "grade_level": "1st grade, 2nd grade",
+      "category": "Fibonacci",
+      "operation": 30
     },
   ],
 };
@@ -284,14 +352,14 @@ export const ratiosAndPercentages = {
     },
     {
       "question": "Mary surveyed students in her school to find out what their favourite sports were. Out of 1,200 students, 455 said hockey was their favourite sport. What percentage of students said hockey was their favourite sport?",
-      "answer": 0.38,
+      "answer": 37.92,
       "grade_level": "4th grade, 5th grade, 6th grade",
       "category": "Ratios and Percentages",
       "operation": "Determining Percentages"
     },
     {
       "question": "A decade ago, Oakville's population was 67,624 people. Now, it is 190% larger. What is Oakville's current population?",
-      "answer": 199168,
+      "answer": 128485.6,
       "grade_level": "4th grade, 5th grade, 6th grade",
       "category": "Ratios and Percentages",
       "operation": "Determining Percent of Change"
@@ -331,14 +399,14 @@ export const probabilityDataRelationships = {
     },
     {
       "question": "The numbers 1 to 50 are in a hat. If the probability of drawing an even number is 25/50, what is the probability of NOT drawing an even number? Express this probability as a fraction.",
-      "answer": "1/2",
+      "answer": 0.5,
       "grade_level": "4th grade, 5th grade, 6th grade, 7th grade",
       "category": "Probability and Data Relationships",
       "operation": "Exploring Complementary Events"
     },
     {
       "question": "A pizza shop has recently sold 15 pizzas. 5 of those pizzas were pepperoni. Answering with a fraction, what is the experimental probability that he next pizza will be pepperoni?",
-      "answer": "1/3",
+      "answer": 0.33,
       "grade_level": "4th grade, 5th grade, 6th grade, 7th grade",
       "category": "Probability and Data Relationships",
       "operation": "Exploring Experimental Probability"

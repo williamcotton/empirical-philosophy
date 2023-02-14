@@ -1,21 +1,22 @@
-import * as dotenv from 'dotenv'; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { ChatGPTAPI } from 'chatgpt';
 import wikipedia from 'wikipedia';
 import WolframAlphaAPI from 'wolfram-alpha-node';
-dotenv.config();
 
 import {
-  analyticAugmentation0,
-  analyticAugmentation1,
-  analyticAugmentationContext,
-  analyticAugmentation2,
+  analyticAugmentationFirstOrder,
+  analyticAugmentationFirstOrderQueryContext,
+  analyticAugmentationSecondOrder,
+  analyticAugmentationThirdOrder,
 } from "./analytic-augmentations.js";
 
-const waApi = WolframAlphaAPI(
+const wolframAlpha = WolframAlphaAPI(
   process.env.WOLFRAM_ALPHA_API_KEY
 );
 
-const api = new ChatGPTAPI({
+const chatGpt = new ChatGPTAPI({
   apiKey: process.env.OPENAI_API_KEY,
   completionParams: {
     model: 'text-davinci-003',
@@ -23,62 +24,99 @@ const api = new ChatGPTAPI({
   },
 });
 
-export function parseResponse(res) {
+function toNum(str) {
+  if (str.indexOf('.') !== -1) {
+    return (Math.round(parseFloat(str.replace(/,/g, ''))*100)/100);
+  }
+  return parseInt(str.replace(/,/g, ''),10);
+}
+
+export function parseResponse(res, dispatch) {
   let p;
   try {
     p = eval(res.text);
-    console.log('eval');
+    dispatch({type: 'eval_parse'});
   } catch (e) {
     try {
       p = JSON.parse(res.text);
-      console.log('json parse');
+      dispatch({type: 'json_parse'});
     } catch (e) {
-      console.log('error');
+      p = {answer: undefined, en: undefined, solvedProblems: [], analytic: true, synthetic: false, computed: false, parsed: false, error: e};
+      dispatch({type: 'parse_error', text: res.text, error: e});
     }
   }
   return p;
 }
 
-async function query({prompt, topic, target, type}) {
-  // const [wolfromAlphaQuery, wikipediaSummary] = await Promise.all([
-  //   waApi.getFull(prompt),
-  //   wikipedia.summary(topic),
-  // ]);
-
-  // console.log({wolfromAlphaQuery});
-  // console.log(JSON.stringify(wolfromAlphaQuery));
-  // if (wolfromAlphaQuery.pods) {
-  //   const wolfromAlphaContent = JSON.stringify(wolfromAlphaQuery.pods.map(p => ({[p.title]:p.subpods[0].plaintext})));
-  //   console.log({wolfromAlphaContent});
-  //   const wolframAlphaQueryPrompt = `Context(${wolfromAlphaContent}) ${prompt}`;
-  //   const solvedProblem = await ask(wolframAlphaQueryPrompt, analyticAugmentationContext);
-  //   solvedProblem.wolfromAlphaQuery = wolfromAlphaQuery;
-  //   const populationOfAlbequerque = solvedProblem.answer;
-  //   return {answer: populationOfAlbequerque, solvedProblem};
-  // } else {
-  //   const wikipediaSummaryContent = wikipediaSummary.extract;
-  //   const wikipediaSummaryAugmentedPrompt = `Context(${wikipediaSummaryContent}) ${prompt}`;
-  //   const solvedProblem = await ask(wikipediaSummaryAugmentedPrompt, analyticAugmentationContext);
-  //   solvedProblem.wikipediaSummary = wikipediaSummary;
-  //   return {answer: solvedProblem.answer, solvedProblem};
-  // }
-
+async function wikipediaQueryEngine({prompt, topic, target, type, dispatch}) {
   const wikipediaSummary = await wikipedia.summary(topic);
-  const wikipediaSummaryContent = wikipediaSummary.extract;
-  const wikipediaSummaryAugmentedPrompt = `Context(${wikipediaSummaryContent}) ${prompt}`;
-  const solvedProblem = await ask(wikipediaSummaryAugmentedPrompt, analyticAugmentationContext);
+  const wikipediaSummaryContext = wikipediaSummary.extract;
+  const solvedProblem = await ask(prompt, dispatch, wikipediaSummaryContext, analyticAugmentationFirstOrderQueryContext);
   solvedProblem.wikipediaSummary = wikipediaSummary;
-  const answer = type === 'number' ? (Math.round(parseFloat(solvedProblem.answer)*100)/100) : solvedProblem.answer;
-  return {answer, solvedProblem};
+  dispatch({type: 'query_wikipedia_response', answer: solvedProblem.answer});
+  return {answer: solvedProblem.answer, solvedProblems: [solvedProblem]};
 }
 
-export async function ask(prompt, augment=analyticAugmentation2) {
-  const augmentedPrompt = augment ? `${augment} ${prompt}` : prompt;
-  const res = await api.sendMessage(augmentedPrompt);
-  res.completionParams = api._completionParams;
-  const p = {prompt, augmentedPrompt, res, ...parseResponse(res)};
-  const {answer, solvedProblem} = p.thunk ? await eval(p.thunk) : await eval(p.answer);
-  p.solvedProblem = solvedProblem;
-  p.answer = typeof answer === 'number' ? (Math.round(parseFloat(answer)*100)/100) : answer;
+async function wolframAlphaQueryEngine({prompt, topic, target, type, dispatch}) {
+  const wolfromAlphaQuery = await wolframAlpha.getFull(prompt);
+  if (wolfromAlphaQuery.pods) {
+    const wolfromAlphaContext = JSON.stringify(wolfromAlphaQuery.pods.map(p => ({[p.title]:p.subpods[0].plaintext})));
+    const solvedProblem = await ask(prompt, dispatch, wolfromAlphaContext, analyticAugmentationFirstOrderQueryContext);
+    solvedProblem.wolfromAlphaQuery = wolfromAlphaQuery;
+    dispatch({type: 'query_wolfram_response', answer: solvedProblem.answer});
+    return {answer: solvedProblem.answer, solvedProblems: [solvedProblem]};
+  }
+  return {answer: undefined, solvedProblems: [{wolfromAlphaQuery}]};
+}
+
+const queryEngines = [
+  wolframAlphaQueryEngine,
+  wikipediaQueryEngine,
+];
+
+async function query({prompt, topic, target, type, dispatch}) {
+  dispatch({type: 'query', prompt, topic, target, type});
+  const [wolfromSolvedProblem, wikipediaSolvedProblem] = await Promise.all(queryEngines.map(qe => qe({prompt, topic, target, type, dispatch})));
+  if (wolfromSolvedProblem.answer) {
+    wolfromSolvedProblem.solvedProblems.push(wikipediaSolvedProblem);
+    return wolfromSolvedProblem;
+  }
+  if (wikipediaSolvedProblem.answer) {
+    wikipediaSolvedProblem.solvedProblems.push(wolfromSolvedProblem);
+    return wikipediaSolvedProblem;
+  }
+}
+
+export async function ask(prompt, dispatch, context='', augment=analyticAugmentationThirdOrder) {
+  dispatch({type: 'ask', prompt});
+  const augmentedPrompt = augment ? `${augment} Context(${context})${prompt}` : prompt;
+  const res = await chatGpt.sendMessage(augmentedPrompt);
+  dispatch({type: 'ask_response'});
+  res.completionParams = chatGpt._completionParams;
+  const p = {prompt, augmentedPrompt, res, ...parseResponse(res, dispatch)};
+  dispatch({type: 'ask_parsed_response', thunk: p.thunk, en: p.en});
+  try {
+    const evaled = p.thunk ? await eval(p.thunk) : await eval(p.answer);
+    if (evaled && evaled.answer) {
+      p.answer = typeof evaled.answer === 'number' ? (Math.round(parseFloat(evaled.answer)*100)/100) : evaled.answer;
+      p.en_answer = p.en.replace("{answer}", p.answer || "");
+    } else {
+      p.answer = undefined;
+      p.en_answer = undefined;
+    }
+    if (evaled && evaled.solvedProblems) {
+      p.solvedProblems = evaled.solvedProblems;
+    } else {
+      p.solvedProblems = [];
+    }
+  }
+  catch (e) {
+    console.log(e);
+    p.answer = undefined;
+    p.en_answer = undefined;
+    p.error = e;
+    p.solvedProblems = [];
+  }
+  dispatch({type: 'ask_evaluated_response', answer: p.answer, en_answer: p.en_answer});
   return p;
 }
