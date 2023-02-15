@@ -17,7 +17,7 @@ import {
 
 export type Problem = {
   question: string;
-  answer: string | number | boolean;
+  answer: string | number | boolean | number[];
   grade_level: string;
   category: string;
   operation: number | string;
@@ -41,13 +41,16 @@ async function solve(problem: Problem, dispatch: Dispatch) {
 
 const dispatch = (action: Action) => console.log(action);
 
-const data = await solve(openEnded.problems[2], dispatch);
+const { problem, solvedProblem, correct } = await solve(
+  openEnded.problems[3],
+  dispatch
+);
 
-insertData(data);
+insertData({ problem, solvedProblem, correct });
 dispatch({
   type: "answer",
-  question: data.problem.question,
-  answer: data.solvedProblem.answer,
-  correct: data.correct,
+  question: problem.question,
+  answer: solvedProblem.answer,
+  correct: correct,
 });
 closeDb();

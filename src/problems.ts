@@ -586,5 +586,13 @@ export const openEnded = {
       category: "Philosophy",
       operation: "Analytic Propositions",
     },
+    {
+      question:
+        "Answering as [rowInt, colInt], writing custom predictBestMove, getEmptySpaces, minimax and checkWinner functions implemented in the thunk, what is the best tic-tac-toe move for player X on this board: [['X', '_', 'X'], ['_', '_', '_'], ['_', '_', '_']]?",
+      answer: [0, 1],
+      grade_level: "University",
+      category: "Computer Science",
+      operation: "Minimax",
+    },
   ],
 };
