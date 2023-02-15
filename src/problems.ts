@@ -581,7 +581,7 @@ export const openEnded = {
     },
     {
       question: "Are all bachelors unmarried?",
-      answer: "yes",
+      answer: true,
       grade_level: "University",
       category: "Open Ended",
       operation: "Quiz",

@@ -13,6 +13,8 @@
     "chatgpt": "^4.2.0",
     "dotenv": "^16.0.3",
     "sqlite3": "^5.1.4",
+    "synonyms": "^1.0.1",
+    "thesaurus-com": "^1.2.3",
     "ts-node": "^10.9.1",
     "wikipedia": "^2.0.0",
     "wolfram-alpha-node": "^0.0.3",

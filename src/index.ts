@@ -17,7 +17,7 @@ import {
 
 export type Problem = {
   question: string;
-  answer: string | number;
+  answer: string | number | boolean;
   grade_level: string;
   category: string;
   operation: number | string;

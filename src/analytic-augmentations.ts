@@ -90,17 +90,6 @@ Define new functions in the %%%THUNK%%% to perform calculations.
 Always answer with Javascript compatible code in the %%%THUNK%%%, including numerical form without commas (eg, 238572348723).
 Always answer with this JSON compatible object form, eg, {"thunk":%%%THUNK%%%} 
 Question: 
-Context()
-Are all bachelors unmarried?
-{
-  "thunk": "(async function(query, dispatch) {
-    dispatch({type: 'compute'});
-    const termsAreSynonyms = areSynonyms('bachelor', 'unmarried') ? 'yes' : 'no';
-    return {answer: termsAreSynonyms, solvedProblems: [], computed: true, query: false};
-  })(query, dispatch)",
-  "en": "{answer}, all bachelors are unmarried."
-}
-Question: 
 Context() 
 What is twice the population of Albequerque, New Mexico?
 {

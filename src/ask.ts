@@ -9,6 +9,7 @@ import {
 } from "./query-engines.js";
 
 import wordnet from "wordnet";
+await wordnet.init();
 
 import {
   analyticAugmentationFirstOrder,
@@ -24,25 +25,7 @@ export const chatGpt = new ChatGPTAPI({
   },
 });
 
-export async function areSynonyms(word1: string, word2: string) {
-  try {
-    const results1 = await wordnet.lookup(word1);
-    const results2 = await wordnet.lookup(word2);
-
-    const synonyms1 = new Set(results1.flatMap((result) => result.synonyms));
-    const synonyms2 = new Set(results2.flatMap((result) => result.synonyms));
-
-    const commonSynonyms = new Set(
-      [...synonyms1].filter((synonym) => synonyms2.has(synonym))
-    );
-
-    return commonSynonyms.size > 0;
-  } catch (err) {
-    return false;
-  }
-}
-
-export function toNum(str) {
+export function toNum(str: string) {
   if (str.indexOf(".") !== -1) {
     return Math.round(parseFloat(str.replace(/,/g, "")) * 100) / 100;
   }

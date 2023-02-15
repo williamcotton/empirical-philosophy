@@ -21,7 +21,7 @@ export async function insertData(data) {
       data.problem.operation || "",
       data.solvedProblem.prompt,
       data.solvedProblem.augmentedPrompt,
-      JSON.stringify(data.solvedProblem.res),
+      JSON.stringify(data.solvedProblem),
       data.solvedProblem.question || data.problem.question,
       JSON.stringify(
         data.solvedProblem.description ? data.solvedProblem.description : []
