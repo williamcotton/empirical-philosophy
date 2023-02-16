@@ -8,11 +8,11 @@ An **analytic prompt** contains the facts required for the response in the promp
 
 A **synthetic prompt** does not contain the facts required for the response in the prompt. When responding to a synthetic prompt the LLM acts as a **synthsizer**.
 
-A translation combines an **source text** and a specified **translation target** in order to generate a **target text**.
+A translation combines a **source text** and a specified **translation target** in order to generate a **target text**.
 
 ```
 Source Text: "Comment t’appelles-tu?"
-Translation Target: "French to English."
+Translation Target: "Translate to English."
 Target Text: "What is your name?"
 ```
 
@@ -24,7 +24,7 @@ Translation Target: "Translate to English and respond in JSON form."
 Target Reponse: { en: 'What is your name?' }
 ```
 
-A synthetic prompt that undergoes **analytic augmentation** becomes an analytic prompt. When responding to an analytically augmented prompt the LLM acts as a translator into a structured form of data.
+A synthetic prompt that undergoes **analytic augmentation** becomes an analytic prompt. When responding to an analytically augmented prompt the LLM acts as a translator from a source text into a structured form of data.
 
 The most basic form of analytic augmentation is a **zeroth-order** analytic augmentation. This is a prompt that contains a translation target as described in the prompt itself:
 
@@ -117,11 +117,11 @@ console.log(solvedProblem);
 {  "thunk": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
 ```
 
-In each case, the translation target needs to be specified in the prompt in some manner using **translation target examples** if we wish to have a structured response. Multiple examples tend to increase the reliablity of a response in the specific structure. These have been otherwise described as one-shot and many-shot training examples, with the difference between a one-shot translation target and a many-shot translation target being the number of training examples included in the augmentation.
+In each case, the translation target needs to be specified in the prompt in some manner using at least one **translation example (TE)** if we wish to have a structured response. Multiple examples tend to increase the reliablity of a response in the specific structure. These have been otherwise described as one-shot and many-shot training examples, with the difference between a one-shot translation target and a many-shot translation target being the number of TEs included in the augmentation.
 
-When this in-context learning is successful this is evidence that the LLM has both **a priori** abilities to translate from English to JSON and **a posteriori** abilities to translate to a specific type of JSON that were derived from these examples.
+When this in-context learning is successful this is evidence that the LLM has both **a priori** abilities to translate from English to JSON and **a posteriori** abilities to translate to a specific type of JSON that were derived from these translation examples.
 
-Here's a translation target example, broken up into the English question, thunk, and English answer:
+Here's a TE, broken up into the English question, thunk, and English answer:
 
 ```
 Question:
@@ -129,7 +129,7 @@ Are all bachelors unmarried?
 ```
 
 ```typescript
-// translation target example thunk
+// thunk
 ({ answer: "Yes" });
 ```
 
@@ -137,7 +137,7 @@ Are all bachelors unmarried?
 {answer}, all bachelors are unmarried.
 ```
 
-The inclusion of an optional **translation target prologue** increases the reliability of the response in the specific structure:
+The inclusion of an optional **translation prologue** increases the reliability of the response in the specific structure:
 
 ```
 Wait for further questions.
@@ -169,6 +169,8 @@ const solvedProblem = await askFirstOrder(prompt);
 Great, the LLM appears to be able to do basic math.
 
 ### Empirical Sampling
+
+How about with some larger numbers?
 
 ```typescript
 const prompt = `What is 23423923 + 94223412?`;

@@ -45,12 +45,11 @@ const dispatch = (action: Action) => console.log(action);
 const start = new Date().getTime();
 const { problem, solvedProblem, correct } = await solve(
   {
-    question:
-      "Answering as [rowInt, colInt], writing custom predictBestMove, getEmptySpaces, minimax and checkWinner functions implemented in the thunk, what is the best tic-tac-toe move for player X on this board: [['X', '_', 'X'], ['_', '_', '_'], ['_', '_', '_']]?",
-    answer: "[0, 1]",
-    grade_level: "University",
-    category: "Computer Science",
-    operation: "Algorithms",
+    question: "What is the population of Geneseo, NY?",
+    answer: 7574,
+    grade_level: "1st grade, 2nd grade",
+    category: "Geography Research",
+    operation: "Quiz City Population",
   },
   dispatch
 );
