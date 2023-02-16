@@ -45,11 +45,12 @@ const dispatch = (action: Action) => console.log(action);
 const start = new Date().getTime();
 const { problem, solvedProblem, correct } = await solve(
   {
-    question: "What is the population of Geneseo, NY?",
-    answer: 7574,
+    question:
+      "What is the population of Geneseo, NY combined with the population of Rochester, NY, divided by string length of the answer to the question 'What is the capital of France?'?",
+    answer: 43780.4,
     grade_level: "1st grade, 2nd grade",
-    category: "Geography Research",
-    operation: "Quiz City Population",
+    category: "Geography Research, Addition, Division, and Strings",
+    operation: "Quiz City Population, Addition, Division, and Strings",
   },
   dispatch
 );

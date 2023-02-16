@@ -1,8 +1,10 @@
 # From Prompt Alchemy to Prompt Engineering: An Introduction to Analytic Augmentation
 
-A burgeoning lexicon is developing around the use of LLMs like ChatGPT and Stable Diffusion. Prompts, completions, chains, zero-shot, one-shot, many-shot, and fine-tuning are just a few domain specific terms that have evolved quickly over the last two years.
+A lexicon is developing around the use of LLMs like ChatGPT. Prompts, embeddings, completions, chains, hallucinations, few-shots, and fine-tunings are just a few domain specific terms that describe the building blocks of a burgeoning disciplince.
 
-As loosely described in [ChatGPT and the Analytic-Synthetic Distinction](https://www.williamcotton.com/articles/chatgpt-and-the-analytic-synthetic-distinction), there is a useful approach to prompt engineering using the historically informed terminology of analytic augmentation:
+In practice, prompt engineering can successfully improve the results when using LLMs to answer math questions, solve logic problems, or find out the population of a small town. In other words, certain prompts are more likely to result in correct completions than others. This article will introduce the concept of **analytic augmentation**, a prompt engineering metholodogy that can be used to improve the factual results of LLMs and limit hallucinations.
+
+As described in [ChatGPT and the Analytic-Synthetic Distinction](https://www.williamcotton.com/articles/chatgpt-and-the-analytic-synthetic-distinction), using the historically informed terminology:
 
 An **analytic prompt** contains the facts required for the response in the prompt itself. When responding to an analytic prompt the LLM acts as a **translator**.
 
@@ -47,11 +49,7 @@ console.log(solvedProblem);
 // => { capital: 'Paris', country: 'France' }
 ```
 
-We will probably get back the correct answer but the translation target is vague and and the response is not reliably structured in any way, possibly not even as valid JSON.
-
-5 results:
-
-```
+```js
 {"capital": "Paris"}
 Paris
 {"name": "Paris", "country": "France"}
@@ -59,69 +57,69 @@ Paris
 "Paris"
 ```
 
-So how do we go about encouraging specifically structured reponses?
+We will probably get back the correct answer but the translation target is vague and and the response is not reliably structured in any way, possibly not even as valid JSON. You'll also notice that we are getting back different results each time. This is because we have a non-zero temperature meaning the LLM will possibly produce different reults on each new request.
 
-## First Order Analytic Augmentations
+So how do we go about encouraging a specifically structured reponses?
 
-A very basic example uses this template as a prompt:
+## First-Order Analytic Augmentations
+
+A first-order analytic augmentation combination prepends the source prompt with a template:
 
 ```typescript
 export const analyticAugmentationFirstOrder = `
 Wait for further questions. 
 %%%ANSWER%%% should be in numerical form without commas (eg, 238572348723). 
-Always answer with this JSON compatible object form, eg, { "thunk": %%%ANSWER%%% }
+Always answer with this JSON compatible object form, eg, { "data": %%%ANSWER%%%,"en":%%%EN%%% }.
 Question: 
 What is the capital of France?
 {
-  "thunk": "({answer: 'Paris'})",
+  "data": "({answer: 'Paris'})",
   "en": "The capital of France is {answer}."
 } 
 Question: 
 Are all bachelors unmarried?
 {
-  "thunk": "({answer: 'Yes'})",
+  "data": "({answer: 'Yes'})",
   "en": "{answer}, all bachelors are unmarried."
 } 
 Question: 
 `.replace(/(\r\n|\n|\r)/gm, "");
 ```
 
-We can use this to augment a prompt, query an LLM like ChatGPT, and reliably get back a JSON formatted response:
-
 ```typescript
 export async function askFirstOrder(prompt: string) {
   const augmentedPrompt = `${analyticAugmentationFirstOrder} ${prompt}`;
   const res = await chatGpt.sendMessage(augmentedPrompt);
   const solvedProblem = JSON.parse(res.text);
-  return solvedProblem;
+  const evaluated = eval(solvedProblem.data);
+  return { ...evaluated, ...solvedProblem };
 }
 ```
 
-Meaning when we call this function with a prompt like this we get back a JSON object:
+Meaning when we call this function with a prompt like "What is the capital of England?" and reliably get back a properly structured JSON response:
 
 ### Empirical Sampling
 
 ```typescript
 const prompt = `What is the capital of England?`;
 const solvedProblem = await askFirstOrder(prompt);
-console.log(solvedProblem);
 ```
 
-5 results:
-
-```
-{  "thunk": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
-{"thunk": "({answer: 'London'})", "en": "The capital of England is {answer}."}
-{"thunk": "({answer: 'London'})", "en": "The capital of England is {answer}."}
-{  "thunk": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
-{  "thunk": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
+```js
+{  "data": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
+{"data": "({answer: 'London'})", "en": "The capital of England is {answer}."}
+{"data": "({answer: 'London'})", "en": "The capital of England is {answer}."}
+{  "data": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
+{  "data": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
 ```
 
-In each case, the translation target needs to be specified in the prompt in some manner using at least one **translation example (TE)** if we wish to have a structured response. Multiple examples tend to increase the reliablity of a response in the specific structure. These have been otherwise described as one-shot and many-shot training examples, with the difference between a one-shot translation target and a many-shot translation target being the number of TEs included in the augmentation.
+In each case, the translation target needs to be specified in the prompt in some manner using at least one **translation example** if we wish to have a structured response. Multiple examples tend to increase the reliablity of a response in the specific structure. These have been otherwise described as one-shot and few-shot training examples, with the difference the number of translation examples included in the augmentation.
 
-When this in-context learning is successful this is evidence that the LLM has both **a priori** abilities to translate from English to JSON and **a posteriori** abilities to translate to a specific type of JSON that were derived from these translation examples.
+When this in-context learning is successful this is evidence that the LLM has both **a priori** abilities to translate from English to JSON and **a posteriori** abilities to translate to a specific type of JSON that were derived from these translation examples. Fine-tuning a model ingrains these derived a posteriori abilities into the model, resulting in an LLM with new priori abilities to translate.
 
-Here's a TE, broken up into the English question, thunk, and English answer:
+Here's a translation example, broken up into the English question, data, and English answer:
+
+### Translation Example
 
 ```
 Question:
@@ -129,7 +127,7 @@ Are all bachelors unmarried?
 ```
 
 ```typescript
-// thunk
+// data
 ({ answer: "Yes" });
 ```
 
@@ -142,7 +140,7 @@ The inclusion of an optional **translation prologue** increases the reliability 
 ```
 Wait for further questions.
 %%%ANSWER%%% should be in numerical form without commas (eg, 238572348723).
-Always answer with this JSON compatible object form, eg, { "thunk": %%%ANSWER%%% }
+Always answer with this JSON compatible object form, eg, { "data": %%%ANSWER%%% }
 ```
 
 Perhaps best described as alchemical incantations, these are designed to increase the reliability of the response to conform to the specific structure. They are not required but they are useful enough to warrant studying curated collections found at places like [LangChainHub](https://github.com/hwchase17/langchain-hub/tree/master/prompts).
@@ -159,18 +157,18 @@ const solvedProblem = await askFirstOrder(prompt);
 ```
 
 ```js
-{ "thunk": "({answer: '1176'})",  "en": "The answer is {answer}."}
-{ "thunk": "({answer: '1,176'})",  "en": "The answer is {answer}."}
-{ "thunk": "({answer: '1176'})",  "en": "The answer is {answer}."}
-{ "thunk": "({answer: '1176'})",  "en": "The answer is {answer}."}
-{ "thunk": "({answer: '1176'})",  "en": "The answer is {answer}." }
+{ "data": "({answer: '1176'})",  "en": "The answer is {answer}."}
+{ "data": "({answer: '1,176'})",  "en": "The answer is {answer}."}
+{ "data": "({answer: '1176'})",  "en": "The answer is {answer}."}
+{ "data": "({answer: '1176'})",  "en": "The answer is {answer}."}
+{ "data": "({answer: '1176'})",  "en": "The answer is {answer}." }
 ```
 
 Great, the LLM appears to be able to do basic math.
 
-### Empirical Sampling
-
 How about with some larger numbers?
+
+### Empirical Sampling
 
 ```typescript
 const prompt = `What is 23423923 + 94223412?`;
@@ -178,18 +176,18 @@ const solvedProblem = await askFirstOrder(prompt);
 ```
 
 ```js
-{"thunk": "({answer: '113656335'})", "en": "The answer is {answer}."}
-{"thunk": "({answer: '113657135'})", "en": "The answer is {answer}."}
-{"thunk": "({answer: '327633135'})", "en": "The answer to 23423923 + 94223412 is {answer}."}
-{ "thunk": "({answer: '117637135'})",  "en": "The answer is {answer}."}
-{"thunk": "({answer: '112846135'})",  "en": "The answer is {answer}."}
+{"data": "({answer: '113656335'})", "en": "The answer is {answer}."}
+{"data": "({answer: '113657135'})", "en": "The answer is {answer}."}
+{"data": "({answer: '327633135'})", "en": "The answer to 23423923 + 94223412 is {answer}."}
+{ "data": "({answer: '117637135'})",  "en": "The answer is {answer}."}
+{"data": "({answer: '112846135'})",  "en": "The answer is {answer}."}
 ```
 
-The actual answer is `117,647,335`.
+The actual answer is `117,647,335`. It turns out that math related prompts are synthetic prompts. LLMs can successfully translate a math equation into an answer in certain cases but not in others.
 
 So how do we go about improving the reliability of the response?
 
-## Second Order Analytic Augmentations
+## Second-Order Analytic Augmentations
 
 Instead of using the LLM to translate a prompt that includes math _into an answer_ we should have the LLM translate a prompt that includes math _into a thunk that can be evaluated to produce an answer_. This is the foundation of second and higher order analytic augmentation.
 
@@ -197,8 +195,8 @@ Instead of using the LLM to translate a prompt that includes math _into an answe
 export const analyticAugmentationSecondOrder = `
 Do not perform calculations.
 Do not compute the answer.
-Use Javascript Math and Date to perform calculations.
-Always answer with Javascript compatible code in the %%%THUNK%%%, including numerical form without commas (eg, 238572348723).
+Use JavaScript Math and Date to perform calculations.
+Always answer with JavaScript compatible code in the %%%THUNK%%%, including numerical form without commas (eg, 238572348723).
 Always answer with this JSON compatible object form, eg, {"thunk":%%%THUNK%%%} 
 Question: 
 4 days a week, Laura practices martial arts for 1.5 hours. Considering a week is 7 days, what is her average practice time per day each week?
@@ -210,11 +208,10 @@ Question:
     const totalHoursPracticedInAWeek = daysPracticedInAWeek * hoursPracticedInADay;
     const averagePracticeTimePerDay = totalHoursPracticedInAWeek / daysInAWeek;
     return {answer: averagePracticeTimePerDay, computed: true};
-  })()",
+  })",
   "en": "Laura practices an average of {answer} hours per day."
 } 
 Question: 
-Context() 
 What's the rot13 of "Hello World"?
 {
   "thunk": "(async function() { 
@@ -233,21 +230,21 @@ What's the rot13 of "Hello World"?
     }
     const rot13 = compute_rot13(sentence);
     return {answer: rot13, computed: true};
-  })()",
+  })",
   "en": "The rot13 of 'Hello World' is {answer}."
 } 
 Question: 
 `.replace(/(\r\n|\n|\r)/gm, "");
 ```
 
-In addition to our JSON parser we are taking advantage of JavaScript to evaluate so we'll need to translate our thunk into self-executing Javascript:
+In addition to our JSON parser we will need to evaluate and call the thunk in order to computer our desired answer:
 
 ```typescript
 export async function askSecondOrder(prompt: string) {
   const augmentedPrompt = `${analyticAugmentationSecondOrder} ${prompt}`;
   const res = await chatGpt.sendMessage(augmentedPrompt);
   const solvedProblem = JSON.parse(res.text);
-  const evaluatedThunk = await eval(solvedProblem.thunk);
+  const evaluatedThunk = await eval(solvedProblem.thunk)();
   evaluatedThunk.en_answer = evaluatedThunk.en.replace(
     "{answer}",
     evaluatedThunk.answer || ""
@@ -257,6 +254,8 @@ export async function askSecondOrder(prompt: string) {
 ```
 
 Let's see how this improves our ability to solve math problems:
+
+### Empirical Sampling
 
 ```typescript
 const prompt = `What is 23423923 + 94223412?`;
@@ -283,14 +282,11 @@ const solvedProblem = await askSecondOrder(prompt);
 // -> The sum of 23423923 and 94223412 is 117647335.
 ```
 
-```
-4/5 voted for [0, 1]
-1/5 voted for undefined due to SyntaxError
-```
-
 Great, we're always getting the correct answer now!
 
-We can now have our system answer much more complex questions, like:
+We can now have our system try and answer much more complex questions, like making an optimal tic-tac-toe move:
+
+### Empirical Sampling
 
 ```typescript
 const prompt = `Answering as [rowInt, colInt], writing custom predictBestMove, getEmptySpaces, minimax and checkWinner functions implemented in the thunk, what is the best tic-tac-toe move for player X on this board: [['X', '_', 'X'], ['_', '_', '_'], ['_', '_', '_']]?`;
@@ -314,9 +310,18 @@ SyntaxError: Unexpected end of input
 
 ```
 
+```
+4/5 voted for [0, 1]
+1/5 voted for undefined due to SyntaxError
+```
+
 It's worth noting that the LLM will not always respond to a prompt with a correct program. The size of an LLM dictates the complexity of the programs it can generate. The way that the question is asked is also very important. The more details provided on how the computations should be performed, the more likely the LLM will be able to generate a correct program.
 
+In addition, setting a non-zero temperature will result in multiple solutions. This can be beneficial because a temperature of 0 can sometimes return a completion with syntax or logic errors. The technique of **sample-and-vote**, setting a higher temperature and sampling a number of solutions and having a simple voting mechanism, will result in more consistent results. In the above we sampling we can see that 4/5 solutions had the same answer.
+
 Here's a real example of a correct response with some syntax highlighting that is worth examining in detail:
+
+### Sample Thunk
 
 ```typescript
 {
@@ -419,7 +424,7 @@ Here's a real example of a correct response with some syntax highlighting that i
 }
 ```
 
-You'll notice that I had to provide a lot of details about how to use minmax in a tic-tac-toe context in the prompt to get the LLM to generate a correct program.
+You'll notice that we had to provide a lot of details about how to use minmax in a tic-tac-toe context in the prompt to get the LLM to generate a correct program.
 
 It took a number of incorrect prompt attempts to get this correct:
 
@@ -433,18 +438,44 @@ Answering as [rowInt, colInt], using a simple and non-exhaustive method implemen
 
 A reasonable prediction is that as an LLM gets larger, it will be able to generate more complex programs with less detailed guidance.
 
+We had some luck asking some simple fact-based questions about the world. Like with math, how will the LLM respond to more detailed questions about the world?
+
+```typescript
+const prompt = `What is the population of Geneseo, NY?`;
+const solvedProblem = await askFirstOrder(prompt);
+```
+
+```js
+{"thunk": "(async function() {    const population = 8883;    return {answer: population, computed: true};  })()", "en": "The population of Geneseo, NY is {answer}."}
+{"thunk": "(async function() {  const population = 11388;  return {answer: population, computed: true};})()", "en": "The population of Geneseo, NY is {answer}."}
+{"thunk": "(async function() {    const population = 8793;    return {answer: population, computed: true};  })()",  "en": "The population of Geneseo, NY is {answer}."}
+{"thunk": "(async function() {    const population = 7936;    return {answer: population, computed: true};  })()", "en": "The population of Geneseo, NY is {answer}."}
+{"thunk": "(async function() {    const population = await fetch('https://www.zip-codes.com/city/ny-geneseo.asp').then(r => r.text()).then(html => html.match(/Population: <strong>(.*)<\\/strong>/)[1]).catch(e => null);    return {answer: population, computed: true};  })()",  "en": "The population of Geneseo, NY is {answer}."}
+```
+
+According to Wikipedia the answer is `10,483`. This is a synthetic prompt, meaning it doesn't contain the required facts in the prompt itself, so the LLM has resorted to synthesizing an answer. However, this last sample is hinting at a better way...
+
+With this in mind, how do we go about improving the reliability of the results?
+
 ## Third-Order Analytical Augmentations
 
-This translation target example is a bit more complex. It includes a query to another LLM, and a computation of the answer based on the response to the query.
+A third-order analytical augmentation introduces the ability to translate our source prompt into a computation that can make further calls to the LLM along with a provided context.
+
+We inject stateful dependencies into a parameterized thunk, or pthunk. We could structure this in the same way that this term is used in functional programming but for presentation sake we will just directly call the pthunk and not have the pthunk return a thunk.
+
+This translation example is a bit more complex. It includes a query to another LLM, and a computation of the answer based on the response to the query:
+
+### Translation Example
 
 ```
 Question:
 Context()
 What is twice the population of Albequerque, New Mexico?
+
 ```
 
 ```typescript
-// translation target example thunk
+// pthunk
 async function(query, dispatch) {
   dispatch({type: 'compute'});
   const populationOfAlbequerque = await query({
@@ -460,7 +491,9 @@ async function(query, dispatch) {
 }
 ```
 
-This translation target example builds its own function to compute the answer.
+Like we saw in the second-order augmentation, this translation example builds its own function to compute the answer:
+
+### Translation Example
 
 ```
 Question:
@@ -469,7 +502,7 @@ What's the rot13 of "Hello World"?
 ```
 
 ```typescript
-// translation target example thunk
+// pthunk
 async function(query, dispatch) {
   dispatch({type: 'compute'});
   const sentence = 'Hello World';
@@ -488,10 +521,30 @@ async function(query, dispatch) {
   const rot13 = compute_rot13(sentence);
   dispatch({type: 'compute_response'});
   return {answer: rot13, solvedProblems: [], computed: true, query: false};
-})(query, dispatch);
+};
 ```
 
-Just like in the second-order example, we need to evaluate the thunk, but this time in the context of the query, dispatch and toNum functions, which we then merge into the solvedProblem object.
+But we don't always want to require a function or a query, so we include this translation example as well:
+
+### Translation Example
+
+```
+Question:
+Context()
+```
+
+```typescript
+// pthunk
+async function(query, dispatch) {
+    dispatch({type: 'compute'});
+    const populationOfOakvilleTenYearsAgo = 67624;
+    const populationOfOakvilleNow = populationOfOakvilleTenYearsAgo * 1.9;
+    dispatch({type: 'compute_response'});
+    return {answer: populationOfOakvilleNow, solvedProblems: [], computed: true, query: false};
+  }
+```
+
+Just like in the second-order example, we need to evaluate the pthunk, but this time in the context of the query and dispatch functions, which we then merge into the solvedProblem object.
 
 ```typescript
 export async function ask(
@@ -505,20 +558,40 @@ export async function ask(
     : prompt;
   const res = await chatGpt.sendMessage(augmentedPrompt);
   const solvedProblem = JSON.parse(res.text);
-  const evaluateStatefulThunk = async ({ query, dispatch, toNum }) =>
-    await eval(solvedProblem.thunk);
-  const evaluatedThunk = await evaluateStatefulThunk({
-    query,
-    dispatch,
-    toNum,
-  });
-  evaluatedThunk.en_answer = evaluatedThunk.en.replace(
+
+  let evaluated;
+  if (solvedProblem.data) {
+    evaluated = eval(solvedProblem.data);
+  } else if (solvedProblem.thunk) {
+    evaluated = await eval(solvedProblem.thunk)();
+  } else if (solvedProblem.pthunk) {
+    evaluated = await eval(solvedProblem.pthunk)(query, dispatch);
+  }
+  evaluated.en_answer = evaluated.en.replace(
     "{answer}",
-    evaluatedThunk.answer || ""
+    evaluated.answer || ""
   );
-  return { ...solvedProblem, ...evaluatedThunk };
+
+  return { ...solvedProblem, ...evaluated };
 }
 ```
+
+#### dispatch
+
+A simple dispatch mechanism that can be used for updating the UI:
+
+```typescript
+export type Action = {
+  type: string;
+  [key: string]: any;
+};
+
+export type Dispatch = (action: Action) => void;
+
+const dispatch = (action: Action) => console.log(action);
+```
+
+#### query
 
 Interactions with external state such as computations that are contingent on the results of other natural language queries and the ability to dispatch actions to the query context are all made possible by the third-order analytical augmentations.
 
@@ -543,46 +616,37 @@ export async function query({ prompt, topic, target, type, dispatch }) {
 }
 ```
 
-```typescript
-export type Action = {
-  type: string;
-  [key: string]: any;
-};
-
-export type Dispatch = (action: Action) => void;
-
-const dispatch = (action: Action) => console.log(action);
-```
-
 When a query is made a call is made to wikipedia to get the context for the query. The context is then passed to the ask function, which is then inserted into the prompt.
 
 However, instead of asking the question in the context of a third-order analytical augmentation, we ask the question in the context of a first-order analytical augmentation, in order to prevent an infinite loop of interactions with an LLM.
 
 If a third-order analytic augmentation results in code that calls further queries of an LLM then the state of executions must be maintained by the caller and eventually halted, either by forcing termination or by using a lower order analytical augmentation.
 
-If a second-order analytic augmentation results in code that loops forever the state of executions must be maintained by the caller and eventually halted by forcing termination.
+If a second-order analytic augmentation or above results in code that loops forever the state of executions must be maintained by the caller and eventually halted by forcing termination.
 
-First-order and zeroth-order analytical augmentations will eventually halt on their own.
+First-order and zeroth-order analytical augmentations will halt on their own.
+
+## Returning to First-Order Analytical Augmentations
 
 ```typescript
 export const analyticAugmentationFirstOrderQueryContext = `
 Do not perform calculations.
 Do not compute the answer.
-Use Javascript Math and Date to perform calculations.
-Always answer with Javascript compatible code in the %%%THUNK%%%, including numerical form without commas (eg, 238572348723).
-Always answer with this JSON compatible object form, eg, {"thunk":%%%THUNK%%%} 
+Use JavaScript Math and Date to perform calculations.
+Always answer with JavaScript compatible code in the %%%DATA%%%, including numerical form without commas (eg, 238572348723).
+Always answer with this JSON compatible object form, eg, {"data":%%%DATA%%%} 
 Question: 
 Context(Batman first appeared in comics in 1939.)
 What year did Batman first appear in comics?
 {
-  "thunk": "({answer: '1939', analytic: true, computed: false})",
+  "data": "({answer: '1939', analytic: true, computed: false})",
   "en": "Batman first appeared in comics in {answer}."
 }
 Question: 
 Context(France groes wine in the Burgundy region.)
 What is the capital of France?
 {
-  "thunk": "({answer: 'Paris', synthetic: true, computed: false})",
+  "data": "({answer: 'Paris', synthetic: true, computed: false})",
   "en": "The capital of France is {answer}."
 }
 Question: 
@@ -590,29 +654,78 @@ Context(The population of the town was 10,483 at the 2010 census.)
 What is the population of Geneseo, NY?
 {
   /* Does Context(The population of the town was 10,483 at the 2010 census.) contain 10483? analytic: true */
-  "thunk": "({answer: toNum('10483'), analytic: true, computed: false})",
+  "data": "({answer: toNum('10483'), analytic: true, computed: false})",
   "en": "The population of Geneseo, NY is {answer}."
 }
 Context(Dansville is a village in Livingston County, New York)
 What is percentage of people who make more than $10,000 a year in Dansville, NY?
 {
   /* Does Context(Dansville is a village in Livingston County, New York) contain 34.3? synthetic: true */
-  "thunk": "({answer: toNum('34.3'), synthetic: true, computed: false})",
+  "data": "({answer: toNum('34.3'), synthetic: true, computed: false})",
   "en": "The population of Dansville, NY is {answer}."
 }
 Question:
 `.replace(/(\r\n|\n|\r)/gm, "");
 ```
 
+We're now providing context to aid in the translation. What starts as a synthetic prompt, for example, "What is the population of Geneseo, NY divided by 4?", becomes an analytic prompt through the process of analytic augmentation.
+
+### Empirical Sampling
+
 ```typescript
-export function toNum(str: string) {
-  if (str.indexOf(".") !== -1) {
-    return Math.round(parseFloat(str.replace(/,/g, "")) * 100) / 100;
-  }
-  return parseInt(str.replace(/,/g, ""), 10);
-}
+const prompt = `What is the population of Geneseo, NY combined with the population of Rochester, NY, divided by string length of the answer to the question 'What is the capital of France?'?`;
+const solvedProblem = await askSecondOrder(prompt);
 ```
 
-Colocation of CPU and GPU hardware and memory used for the pairing of an LLM with a computer will be more performant than other architectures.
+```js
+// -> The population of Geneseo, NY combined with the population of Rochester, NY, divided by string length of the answer to the question 'What is the capital of France?' is 44362.2.
+// -> The population of Geneseo, NY combined with the population of Rochester, NY, divided by string length of the answer to the question 'What is the capital of France?' is 44362.2.
+// -> The population of Geneseo, NY combined with the population of Rochester, NY divided by the string length of the answer to the question 'What is the capital of France?' is 44362.2.
+// -> undefined
+// -> The population of Geneseo, NY combined with the population of Rochester, NY divided by the string length of the answer to the question 'What is the capital of France?' is 44362.2.
+```
 
-Why javascript? Is an LLM any better or worse at using assembly to solve problems?
+```
+4/5 voted for 44362.2
+1/5 voted for undefined due to SyntaxError
+```
+
+### Sample Pthunk
+
+```typescript
+async function(query, dispatch) {
+  dispatch({type: 'compute'});
+  const populationOfGeneseo = await query({
+    prompt: 'What is the population of Geneseo, NY?',
+    topic: 'Geneseo, NY',
+    target: 'population',
+    type: 'number',
+    dispatch,
+  });
+  const populationOfRochester = await query({
+    prompt: 'What is the population of Rochester, NY?',
+    topic: 'Rochester, NY',
+    target: 'population',
+    type: 'number',
+    dispatch,
+  });
+  const capitalOfFrance = await query({
+    prompt: 'What is the capital of France?',
+    topic: 'France',
+    target: 'capital',
+    type: 'string',
+    dispatch,
+  });
+  const populationOfGeneseoPlusRochesterDividedByCapitalOfFranceLength = (populationOfGeneseo.answer + populationOfRochester.answer) / capitalOfFrance.answer.length;
+  dispatch({type: 'compute_response'});
+  return {answer: populationOfGeneseoPlusRochesterDividedByCapitalOfFranceLength, solvedProblems: [populationOfGeneseo.solvedProblems, populationOfRochester.solvedProblems, capitalOfFrance.solvedProblems], computed: true, query: true};
+});
+```
+
+In this case it should be clear why we need the LLM before we start adding context to a query. We have no reliable way to search Wikipedia or any other source of stateful information based on the prompt itself as it combines a number of different facts and topics.
+
+What kind of context can we provide before we need the translation abilities of the LLM?
+
+### Embeddings
+
+Coming soon...
