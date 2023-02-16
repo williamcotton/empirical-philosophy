@@ -100,7 +100,7 @@ export async function ask(
   prompt: string,
   dispatch: Dispatch,
   context: string = "",
-  augment: string = analyticOrders[2]
+  augment: string = analyticOrders[3]
 ): Promise<SolvedProblem> {
   dispatch({ type: "ask", prompt, context, augment });
   const augmentedPrompt = augment
@@ -114,7 +114,13 @@ export async function ask(
   const p = { prompt, augmentedPrompt, res, ...parseResponse(res, dispatch) };
   dispatch({ type: "ask_parsed_response", thunk: p.thunk, en: p.en });
   try {
-    const evaled = p.thunk ? await eval(p.thunk) : await eval(p.answer);
+    const evaled = p.data
+      ? eval(p.data)
+      : p.thunk
+      ? await eval(p.thunk)()
+      : p.pthunk
+      ? await eval(p.pthunk)(query, dispatch)
+      : undefined;
     if (evaled && evaled.answer) {
       p.answer =
         typeof evaled.answer === "number"
