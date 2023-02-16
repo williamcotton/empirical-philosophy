@@ -1,3 +1,5 @@
+# From Prompt Alchemy to Prompt Engineering: An Introduction to Analytic Augmentation
+
 A burgeoning lexicon is developing around the use of LLMs like ChatGPT and Stable Diffusion. Prompts, completions, chains, zero-shot, one-shot, many-shot, and fine-tuning are just a few domain specific terms that have evolved quickly over the last two years.
 
 As loosely described in [ChatGPT and the Analytic-Synthetic Distinction](https://www.williamcotton.com/articles/chatgpt-and-the-analytic-synthetic-distinction), there is a useful approach to prompt engineering using the historically informed terminology of analytic augmentation:
@@ -9,12 +11,6 @@ A **synthetic prompt** does not contain the facts required for the response in t
 A translation combines an **source text** and a specified **translation target** in order to generate a **target text**.
 
 ```
-Source Text: "What is the capital of France?"
-Translation Target: "The factual answer to the given question."
-Target Text: "Paris is the capital of France."
-```
-
-```
 Source Text: "Comment t’appelles-tu?"
 Translation Target: "French to English."
 Target Text: "What is your name?"
@@ -22,9 +18,15 @@ Target Text: "What is your name?"
 
 An LLM operates on an **analytic source prompt** that combines a source text and a specified translation target in order to generate a completion in the form of the target response.
 
+```
+Source Text: "Comment t’appelles-tu?"
+Translation Target: "Translate to English and respond in JSON form."
+Target Reponse: { en: 'What is your name?' }
+```
+
 A synthetic prompt that undergoes **analytic augmentation** becomes an analytic prompt. When responding to an analytically augmented prompt the LLM acts as a translator into a structured form of data.
 
-The most basic form of analytic augmentation is a **zeroth-order** analytic augmentation. This is a prompt that contains a **translation target** as described in the prompt itself:
+The most basic form of analytic augmentation is a **zeroth-order** analytic augmentation. This is a prompt that contains a translation target as described in the prompt itself:
 
 ```typescript
 export async function askZerothOrder(prompt: string) {
@@ -36,14 +38,26 @@ export async function askZerothOrder(prompt: string) {
 
 So when we call this function with a prompt like this we get back a JSON object:
 
+### Empirical Sampling
+
 ```typescript
-const prompt = `What is the capital of France? Please respond in JSON form.`;
+const prompt = `What is the capital of France? Respond in JSON form.`;
 const solvedProblem = await askZerothOrder(prompt);
 console.log(solvedProblem);
 // => { capital: 'Paris', country: 'France' }
 ```
 
 We will probably get back the correct answer but the translation target is vague and and the response is not reliably structured in any way, possibly not even as valid JSON.
+
+5 results:
+
+```
+{"capital": "Paris"}
+Paris
+{"name": "Paris", "country": "France"}
+"Paris"
+"Paris"
+```
 
 So how do we go about encouraging specifically structured reponses?
 
@@ -85,11 +99,22 @@ export async function askFirstOrder(prompt: string) {
 
 Meaning when we call this function with a prompt like this we get back a JSON object:
 
+### Empirical Sampling
+
 ```typescript
-const prompt = `What is the capital of France?`;
+const prompt = `What is the capital of England?`;
 const solvedProblem = await askFirstOrder(prompt);
 console.log(solvedProblem);
-// => { answer: 'Paris', en: '{answer} is the capital of France.' }
+```
+
+5 results:
+
+```
+{  "thunk": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
+{"thunk": "({answer: 'London'})", "en": "The capital of England is {answer}."}
+{"thunk": "({answer: 'London'})", "en": "The capital of England is {answer}."}
+{  "thunk": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
+{  "thunk": "({answer: 'London'})",  "en": "The capital of England is {answer}."}
 ```
 
 In each case, the translation target needs to be specified in the prompt in some manner using **translation target examples** if we wish to have a structured response. Multiple examples tend to increase the reliablity of a response in the specific structure. These have been otherwise described as one-shot and many-shot training examples, with the difference between a one-shot translation target and a many-shot translation target being the number of training examples included in the augmentation.
@@ -120,13 +145,51 @@ Wait for further questions.
 Always answer with this JSON compatible object form, eg, { "thunk": %%%ANSWER%%% }
 ```
 
-Consisting of what can best be entertainingly described as alchemical incantations, these are designed to increase the reliability of the response to conform to the specific structure. They are not required but they are useful enough to warrant studying curated collections found at places like [LangChainHub](https://github.com/hwchase17/langchain-hub/tree/master/prompts).
+Perhaps best described as alchemical incantations, these are designed to increase the reliability of the response to conform to the specific structure. They are not required but they are useful enough to warrant studying curated collections found at places like [LangChainHub](https://github.com/hwchase17/langchain-hub/tree/master/prompts).
 
-It seems that careful testing with variable sized LLMs should shed more light on the efficacy of these incantations as this would begin to deliminate a priori and a posteriori abilities of both translation and synthesis.
+It seems that careful empirical research with variable sized LLMs should shed more light on the efficacy of these incantations as this would begin to deliminate a priori and a posteriori abilities of both translation and synthesis.
+
+Let's try some more examples:
+
+### Empirical Sampling
+
+```typescript
+const prompt = `What is 234 + 942?`;
+const solvedProblem = await askFirstOrder(prompt);
+```
+
+```js
+{ "thunk": "({answer: '1176'})",  "en": "The answer is {answer}."}
+{ "thunk": "({answer: '1,176'})",  "en": "The answer is {answer}."}
+{ "thunk": "({answer: '1176'})",  "en": "The answer is {answer}."}
+{ "thunk": "({answer: '1176'})",  "en": "The answer is {answer}."}
+{ "thunk": "({answer: '1176'})",  "en": "The answer is {answer}." }
+```
+
+Great, the LLM appears to be able to do basic math.
+
+### Empirical Sampling
+
+```typescript
+const prompt = `What is 23423923 + 94223412?`;
+const solvedProblem = await askFirstOrder(prompt);
+```
+
+```js
+{"thunk": "({answer: '113656335'})", "en": "The answer is {answer}."}
+{"thunk": "({answer: '113657135'})", "en": "The answer is {answer}."}
+{"thunk": "({answer: '327633135'})", "en": "The answer to 23423923 + 94223412 is {answer}."}
+{ "thunk": "({answer: '117637135'})",  "en": "The answer is {answer}."}
+{"thunk": "({answer: '112846135'})",  "en": "The answer is {answer}."}
+```
+
+The actual answer is `117,647,335`.
+
+So how do we go about improving the reliability of the response?
 
 ## Second Order Analytic Augmentations
 
-The next level replaces our JSON parser with a Javascript evaluator so we'll need to translate our thunk into self-executing Javascript:
+Instead of using the LLM to translate a prompt that includes math _into an answer_ we should have the LLM translate a prompt that includes math _into a thunk that can be evaluated to produce an answer_. This is the foundation of second and higher order analytic augmentation.
 
 ```typescript
 export const analyticAugmentationSecondOrder = `
@@ -149,10 +212,33 @@ Question:
   "en": "Laura practices an average of {answer} hours per day."
 } 
 Question: 
+Context() 
+What's the rot13 of "Hello World"?
+{
+  "thunk": "(async function() { 
+    const sentence = 'Hello World';
+    function compute_rot13(str) {
+      return str.split('').map((char) => {
+        const charCode = char.charCodeAt(0);
+        if (charCode >= 65 && charCode <= 90) {
+          return String.fromCharCode(((charCode - 65 + 13) % 26) + 65);
+        } else if (charCode >= 97 && charCode <= 122) {
+          return String.fromCharCode(((charCode - 97 + 13) % 26) + 97);
+        } else {
+          return char;
+        }
+      }).join('');
+    }
+    const rot13 = compute_rot13(sentence);
+    return {answer: rot13, computed: true};
+  })()",
+  "en": "The rot13 of 'Hello World' is {answer}."
+} 
+Question: 
 `.replace(/(\r\n|\n|\r)/gm, "");
 ```
 
-The next level replaces our JSON parser with a Javascript evaluator so we'll need to translate our thunk into self-executing Javascript:
+In addition to our JSON parser we are taking advantage of JavaScript to evaluate so we'll need to translate our thunk into self-executing Javascript:
 
 ```typescript
 export async function askSecondOrder(prompt: string) {
@@ -168,17 +254,67 @@ export async function askSecondOrder(prompt: string) {
 }
 ```
 
+Let's see how this improves our ability to solve math problems:
+
+```typescript
+const prompt = `What is 23423923 + 94223412?`;
+const solvedProblem = await askSecondOrder(prompt);
+```
+
+```js
+{"thunk": "(async function() { return {answer: 23423923 + 94223412, computed: true}; })()", "en": "The answer is {answer}."}
+// -> The answer is 117647335.
+
+{"thunk": "(async function() { return {answer: 23423923 + 94223412, computed: true}; })()", "en": "The answer is {answer}."}
+// -> The answer is 117647335.
+
+{"thunk": "(async function() { return {answer: 23423923 + 94223412, computed: true}; })()","en": "The answer is {answer}."}
+// -> The answer is 117647335.
+
+{"thunk": "(async function() {    const a = 23423923;    const b = 94223412;    const result = a + b;    return {answer: result, computed: true};  })()",  "en": "The result is {answer}."}
+// -> The result is 117647335.
+
+{"thunk": "(async function() {    const num1 = 23423923;    const num2 = 94223412;    const answer = num1 + num2;    return {answer: answer, computed: true};  })()",  "en": "{answer}."}
+// -> 117647335.
+
+{"thunk": "(async function() {    const numberOne = 23423923;    const numberTwo = 94223412;    const total = numberOne + numberTwo;    return {answer: total, computed: true};  })()",  "en": "The sum of 23423923 and 94223412 is {answer}."}
+// -> The sum of 23423923 and 94223412 is 117647335.
+```
+
+```
+4/5 voted for [0, 1]
+1/5 voted for undefined due to SyntaxError
+```
+
+Great, we're always getting the correct answer now!
+
 We can now have our system answer much more complex questions, like:
 
 ```typescript
 const prompt = `Answering as [rowInt, colInt], writing custom predictBestMove, getEmptySpaces, minimax and checkWinner functions implemented in the thunk, what is the best tic-tac-toe move for player X on this board: [['X', '_', 'X'], ['_', '_', '_'], ['_', '_', '_']]?`;
 const solvedProblem = await askSecondOrder(prompt);
-console.log(solvedProblem);
+```
+
+```
+{"thunk": "(async function() { ... })()",  "en": "The best move for player X is {answer}."}
+// -> The best move for player X is 0,1.
+
+SyntaxError: Unexpected end of input
+
+{"thunk": "(async function() { ... })()",  "en": "The best move for player X is {answer}."}
+// -> The best move for player X is 0,1.
+
+{"thunk": "(async function() { ... })()",  "en": "The best move for player X is [{answer[0]}, {answer[1]}]."}
+// -> The best move for player X is [0, 1].
+
+{"thunk": "(async function() { ... })()",  "en": "The best move for player X is [{answer}]."}
+// -> The best move for player X is [0,1].
+
 ```
 
 It's worth noting that the LLM will not always respond to a prompt with a correct program. The size of an LLM dictates the complexity of the programs it can generate. The way that the question is asked is also very important. The more details provided on how the computations should be performed, the more likely the LLM will be able to generate a correct program.
 
-Here's a real example of a correct response that is worth examining in detail:
+Here's a real example of a correct response with some syntax highlighting that is worth examining in detail:
 
 ```typescript
 {
@@ -280,6 +416,20 @@ Here's a real example of a correct response that is worth examining in detail:
   en_answer: 'The best move for player X is [0, 1].',
 }
 ```
+
+You'll notice that I had to provide a lot of details about how to use minmax in a tic-tac-toe context in the prompt to get the LLM to generate a correct program.
+
+It took a number of incorrect prompt attempts to get this correct:
+
+```
+Answering as [rowInt, colInt], using minimax you implement, what is the best tic-tac-toe move for player X on this board: [['X', '_', 'X'], ['_', '_', '_'], ['_', '_', '_']]?
+```
+
+```
+Answering as [rowInt, colInt], using a simple and non-exhaustive method implemented in the thunk, what is the best tic-tac-toe move for player X on this board: [['X', '_', 'X'], ['_', '_', '_'], ['_', '_', '_']]?
+```
+
+A reasonable prediction is that as an LLM gets larger, it will be able to generate more complex programs with less detailed guidance.
 
 ## Third-Order Analytical Augmentations
 

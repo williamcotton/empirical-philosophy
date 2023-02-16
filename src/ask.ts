@@ -100,14 +100,15 @@ export async function ask(
   prompt: string,
   dispatch: Dispatch,
   context: string = "",
-  augment: string = analyticOrders[3]
+  augment: string = analyticOrders[2]
 ): Promise<SolvedProblem> {
-  dispatch({ type: "ask", prompt, context });
+  dispatch({ type: "ask", prompt, context, augment });
   const augmentedPrompt = augment
     ? `${augment} Context(${context})${prompt}`
     : prompt;
   const res = await chatGpt.sendMessage(augmentedPrompt);
   dispatch({ type: "ask_response" });
+  console.log("\n", prompt, "\n", res.text, "\n");
   // @ts-ignore
   res.completionParams = chatGpt._completionParams;
   const p = { prompt, augmentedPrompt, res, ...parseResponse(res, dispatch) };

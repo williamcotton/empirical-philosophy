@@ -41,10 +41,22 @@ async function solve(problem: Problem, dispatch: Dispatch) {
 
 const dispatch = (action: Action) => console.log(action);
 
+// time this function
+const start = new Date().getTime();
 const { problem, solvedProblem, correct } = await solve(
-  openEnded.problems[3],
+  {
+    question:
+      "Answering as [rowInt, colInt], writing custom predictBestMove, getEmptySpaces, minimax and checkWinner functions implemented in the thunk, what is the best tic-tac-toe move for player X on this board: [['X', '_', 'X'], ['_', '_', '_'], ['_', '_', '_']]?",
+    answer: "[0, 1]",
+    grade_level: "University",
+    category: "Computer Science",
+    operation: "Algorithms",
+  },
   dispatch
 );
+const end = new Date().getTime();
+
+const time = end - start;
 
 insertData({ problem, solvedProblem, correct });
 dispatch({
@@ -52,5 +64,6 @@ dispatch({
   question: problem.question,
   answer: solvedProblem.answer,
   correct: correct,
+  time: time,
 });
 closeDb();

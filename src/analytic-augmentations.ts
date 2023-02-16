@@ -3,17 +3,15 @@ Wait for further questions.
 %%%ANSWER%%% should be in numerical form without commas (eg, 238572348723). 
 Always answer with this JSON compatible object form, eg, { "thunk": %%%ANSWER%%% }
 Question: 
-Context() 
 What is the capital of France?
 {
-  "thunk": "({answer: 'Paris', solvedProblems: [], analytic: false, synthetic: true, computed: false})",
+  "thunk": "({answer: 'Paris'})",
   "en": "The capital of France is {answer}."
 } 
 Question: 
-Context() 
 Are all bachelors unmarried?
 {
-  "thunk": "({answer: 'Yes', solvedProblems: [], analytic: true, synthetic: false, computed: false})",
+  "thunk": "({answer: 'Yes'})",
   "en": "{answer}, all bachelors are unmarried."
 } 
 Question: 
@@ -64,20 +62,40 @@ Use Javascript Math and Date to perform calculations.
 Always answer with Javascript compatible code in the %%%THUNK%%%, including numerical form without commas (eg, 238572348723).
 Always answer with this JSON compatible object form, eg, {"thunk":%%%THUNK%%%} 
 Question: 
-Context() 
 4 days a week, Laura practices martial arts for 1.5 hours. Considering a week is 7 days, what is her average practice time per day each week?
 {
-  "thunk": "(async function(query, dispatch) {
-    dispatch({type: 'compute'});
+  "thunk": "(async function() {
     const daysPracticedInAWeek = 4;
     const hoursPracticedInADay = 1.5;
     const daysInAWeek = 7;
     const totalHoursPracticedInAWeek = daysPracticedInAWeek * hoursPracticedInADay;
     const averagePracticeTimePerDay = totalHoursPracticedInAWeek / daysInAWeek;
-    dispatch({type: 'compute_response'});
-    return {answer: averagePracticeTimePerDay, solvedProblems: [], computed: true, query: false};
-  })(query, dispatch)",
+    return {answer: averagePracticeTimePerDay, computed: true};
+  })()",
   "en": "Laura practices an average of {answer} hours per day."
+} 
+Question: 
+Context() 
+What's the rot13 of "Hello World"?
+{
+  "thunk": "(async function() { 
+    const sentence = 'Hello World';
+    function compute_rot13(str) {
+      return str.split('').map((char) => {
+        const charCode = char.charCodeAt(0);
+        if (charCode >= 65 && charCode <= 90) {
+          return String.fromCharCode(((charCode - 65 + 13) % 26) + 65);
+        } else if (charCode >= 97 && charCode <= 122) {
+          return String.fromCharCode(((charCode - 97 + 13) % 26) + 97);
+        } else {
+          return char;
+        }
+      }).join('');
+    }
+    const rot13 = compute_rot13(sentence);
+    return {answer: rot13, computed: true};
+  })()",
+  "en": "The rot13 of 'Hello World' is {answer}."
 } 
 Question: 
 `.replace(/(\r\n|\n|\r)/gm, "");

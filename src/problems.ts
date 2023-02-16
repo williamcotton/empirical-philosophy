@@ -414,6 +414,14 @@ export const ratiosAndPercentages = {
       category: "Ratios and Percentages",
       operation: "Calculating Averages",
     },
+    {
+      question:
+        "I have a credit card with a $250 annual fee. I get 4 membership reward points for every dollar I spend on groceries. A membership reward point is worth 1.4 cents. How much would I need to spend on groceries to break even?",
+      answer: 4464.29,
+      grade_level: "4th grade, 5th grade, 6th grade",
+      category: "Ratios and Percentages",
+      operation: "Calculating Break Even Points",
+    },
   ],
 };
 
