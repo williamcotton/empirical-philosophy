@@ -237,7 +237,7 @@ Question:
 `.replace(/(\r\n|\n|\r)/gm, "");
 ```
 
-In addition to our JSON parser we will need to evaluate and call the thunk in order to computer our desired answer:
+In addition to our JSON parser we will need to evaluate and call the thunk in order to compute our desired answer:
 
 ```typescript
 export async function askSecondOrder(prompt: string) {
