@@ -191,6 +191,8 @@ So how do we go about improving the reliability of the response?
 
 Instead of using the LLM to translate a prompt that includes math _into an answer_ we should have the LLM translate a prompt that includes math _into a thunk that can be evaluated to produce an answer_. This is the foundation of second and higher order analytic augmentation.
 
+Existing examples include [PAL: Program-aided Language Models](https://reasonwithpal.com) and a number of approaches usin LangChain such as [LLM Math Chain](https://github.com/hwchase17/langchain-hub/tree/master/prompts/llm_math).
+
 ```typescript
 export const analyticAugmentationSecondOrder = `
 Do not perform calculations.
@@ -460,6 +462,8 @@ With this in mind, how do we go about improving the reliability of the results?
 ## Third-Order Analytical Augmentations
 
 A third-order analytical augmentation introduces the ability to translate our source prompt into a computation that can make further calls to the LLM along with a provided context.
+
+Existing examples include [BingChat](https://www.williamcotton.com/articles/bing-third-order), [Toolformer](https://arxiv.org/abs/2302.04761) and [LangChain Agents](https://langchain.readthedocs.io/en/latest/modules/agents/getting_started.html)
 
 We inject stateful dependencies into a parameterized thunk, or pthunk. We could structure this in the same way that this term is used in functional programming but for presentation sake we will just directly call the pthunk and not have the pthunk return a thunk.
 
