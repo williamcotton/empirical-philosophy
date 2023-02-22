@@ -537,6 +537,7 @@ But we don't always want to require a function or a query, so we include this tr
 ```
 Question:
 Context()
+A decade ago, Oakville's population was 67,624 people. Now, it is 190% larger. What is Oakville's current population?
 ```
 
 ```typescript
