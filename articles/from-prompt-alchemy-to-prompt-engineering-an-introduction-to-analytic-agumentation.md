@@ -191,7 +191,7 @@ So how do we go about improving the reliability of the response?
 
 Instead of using the LLM to translate a prompt that includes math _into an answer_ we should have the LLM translate a prompt that includes math _into a thunk that can be evaluated to produce an answer_. This is the foundation of second and higher order analytic augmentation.
 
-Existing examples include [PAL: Program-aided Language Models](https://reasonwithpal.com) and a number of approaches usin LangChain such as [LLM Math Chain](https://github.com/hwchase17/langchain-hub/tree/master/prompts/llm_math).
+Existing examples include [PAL: Program-aided Language Models](https://reasonwithpal.com) and a number of approaches using LangChain such as [LLM Math Chain](https://github.com/hwchase17/langchain-hub/tree/master/prompts/llm_math).
 
 ```typescript
 export const analyticAugmentationSecondOrder = `
@@ -239,7 +239,7 @@ Question:
 `.replace(/(\r\n|\n|\r)/gm, "");
 ```
 
-In addition to our JSON parser we will need to evaluate and call the thunk in order to computer our desired answer:
+In addition to our JSON parser we will need to evaluate and call the thunk in order to compute our desired answer:
 
 ```typescript
 export async function askSecondOrder(prompt: string) {
@@ -620,7 +620,7 @@ export async function query({ prompt, topic, target, type, dispatch }) {
 }
 ```
 
-When a query is made a call is made to wikipedia to get the context for the query. The context is then passed to the ask function, which is then inserted into the prompt.
+When a query is made a call is made to Wikipedia to get the context for the query. The context is then passed to the ask function, which is then inserted into the prompt.
 
 However, instead of asking the question in the context of a third-order analytical augmentation, we ask the question in the context of a first-order analytical augmentation, in order to prevent an infinite loop of interactions with an LLM.
 
