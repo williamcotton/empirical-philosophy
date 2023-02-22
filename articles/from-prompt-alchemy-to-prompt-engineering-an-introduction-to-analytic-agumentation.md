@@ -428,6 +428,8 @@ Here's a real example of a correct response with some syntax highlighting that i
 
 You'll notice that we had to provide a lot of details about how to use minmax in a tic-tac-toe context in the prompt to get the LLM to generate a correct program.
 
+This type of leading question is known as **chain-of-thought** prompting. A similar methodology is applied to the translation examples themselves in that the variable names and computational steps are very explicit and simple. This would be the opposite approach of what is colloquially known as "code golf".
+
 It took a number of incorrect prompt attempts to get this correct:
 
 ```
