@@ -193,6 +193,8 @@ Instead of using the LLM to translate a prompt that includes math _into an answe
 
 Existing examples include [PAL: Program-aided Language Models](https://reasonwithpal.com) and a number of approaches using LangChain such as [LLM Math Chain](https://github.com/hwchase17/langchain-hub/tree/master/prompts/llm_math).
 
+For our example we will be using a JavaScript interpreter.
+
 ```typescript
 export const analyticAugmentationSecondOrder = `
 Do not perform calculations.
@@ -239,7 +241,7 @@ Question:
 `.replace(/(\r\n|\n|\r)/gm, "");
 ```
 
-In addition to our JSON parser we will need to evaluate and call the thunk in order to compute our desired answer:
+Which means that in addition to our JSON parser we will need to evaluate and call the thunk in order to compute our desired answer:
 
 ```typescript
 export async function askSecondOrder(prompt: string) {
@@ -463,13 +465,13 @@ With this in mind, how do we go about improving the reliability of the results?
 
 ## Third-Order Analytical Augmentations
 
-A third-order analytical augmentation introduces the ability to translate our source prompt into a computation that can make further calls to the LLM along with a provided context.
+A third-order analytical augmentation introduces the ability to translate our source prompt into a computation that can make further calls to the LLM along with a provided context. This in essence results in an augmented language model that can learn to use tools and perform actions.
 
-Existing examples include [BingChat](https://www.williamcotton.com/articles/bing-third-order), [Toolformer](https://arxiv.org/abs/2302.04761) and [LangChain Agents](https://langchain.readthedocs.io/en/latest/modules/agents/getting_started.html)
+Existing examples include [BingChat](https://www.williamcotton.com/articles/bing-third-order), [Toolformer](https://arxiv.org/abs/2302.04761) and [LangChain Agents](https://langchain.readthedocs.io/en/latest/modules/agents/getting_started.html).
 
-We inject stateful dependencies into a parameterized thunk, or pthunk. We could structure this in the same way that this term is used in functional programming but for presentation sake we will just directly call the pthunk and not have the pthunk return a thunk.
+Continuing with our specific example using a JavaScript intepreter, we inject stateful dependencies into a parameterized thunk, or pthunk. We could structure this in the same way that this term is used in functional programming but for presentation sake we will just directly call the pthunk and not have the pthunk return a thunk.
 
-This translation example is a bit more complex. It includes a query to another LLM, and a computation of the answer based on the response to the query:
+This translation example is a bit more complex. It includes another indirect query to the LLM, and a computation of the answer based on the response to the query:
 
 ### Translation Example
 
@@ -629,7 +631,7 @@ However, instead of asking the question in the context of a third-order analytic
 
 If a third-order analytic augmentation results in code that calls further queries of an LLM then the state of executions must be maintained by the caller and eventually halted, either by forcing termination or by using a lower order analytical augmentation.
 
-If a second-order analytic augmentation or above results in code that loops forever the state of executions must be maintained by the caller and eventually halted by forcing termination.
+Likewise, a second-order analytic augmentation or above could produce code that loops forever, so the state of executions must be maintained by the caller and eventually halted by forcing termination.
 
 First-order and zeroth-order analytical augmentations will halt on their own.
 
