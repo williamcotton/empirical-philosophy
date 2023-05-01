@@ -330,9 +330,7 @@ Observation: Answer: 2.169459462491557
 Thought:
 ```
 
-### 5th call to the LLM
-
-Which results in one final call to the LLM that then decides that it has completed the answer and responds with:
+Which the LLM responds with:
 
 ```
 I now know the final answer.
