@@ -1,4 +1,4 @@
-# How ReAct Prompting Works
+# How ReAct Prompting Works in Detail
 
 If you were to read [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629) you might not get the impression that multiple calls to an LLM are made after each successive step.
 
